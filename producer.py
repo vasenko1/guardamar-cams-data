@@ -282,6 +282,10 @@ def produce(output: Path, forecast_date: date, token: str) -> dict[str, Any]:
             f"Contains modified Copernicus Atmosphere Monitoring Service "
             f"information {forecast_date.year}."
         ),
+        "disclaimer": (
+            "Neither the European Commission nor ECMWF is responsible for "
+            "this derived product or its use."
+        ),
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
