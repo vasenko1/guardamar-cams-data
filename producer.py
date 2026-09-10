@@ -226,9 +226,9 @@ def produce(output: Path, forecast_date: date, token: str) -> dict[str, Any]:
         key=token,
         quiet=True,
         timeout=60,
-        maximum_tries=3,
+        retry_max=3,
         sleep_max=10,
-        retry_after=10,
+        progress=False,
     )
     with tempfile.TemporaryDirectory(prefix="guardamar-cams-") as directory:
         temporary = Path(directory)
