@@ -183,9 +183,9 @@ def _validate(
     if analysis["grid"] != forecast["grid"]:
         raise ProducerError("Analysis and forecast use different grid points")
     expected_analysis = {
-        datetime.combine(forecast_date - timedelta(days=1), datetime.min.time(), timezone.utc)
+        datetime.combine(forecast_date - timedelta(days=2), datetime.min.time(), timezone.utc)
         + timedelta(hours=hour)
-        for hour in range(24)
+        for hour in range(48)
     }
     expected_forecast = {
         datetime.combine(forecast_date, datetime.min.time(), timezone.utc)
@@ -234,11 +234,14 @@ def produce(output: Path, forecast_date: date, token: str) -> dict[str, Any]:
         temporary = Path(directory)
         analysis_path = temporary / "analysis.zip"
         forecast_path = temporary / "forecast.zip"
-        analysis_metrics = _download(
-            client,
-            _request(forecast_date - timedelta(days=1), "analysis", CORE_VARIABLES),
-            analysis_path,
+        analysis_request = _request(
+            forecast_date - timedelta(days=1), "analysis", CORE_VARIABLES
         )
+        analysis_request["date"] = [
+            f"{(forecast_date - timedelta(days=2)).isoformat()}/"
+            f"{(forecast_date - timedelta(days=1)).isoformat()}"
+        ]
+        analysis_metrics = _download(client, analysis_request, analysis_path)
         forecast_metrics = _download(
             client,
             _request(forecast_date, "forecast", CORE_VARIABLES + OPTIONAL_VARIABLES),

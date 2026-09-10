@@ -8,8 +8,8 @@ availability time of the current 00 UTC forecast and before the bot's 10:10
 
 The producer retrieves only:
 
-- the previous UTC day's 24 hourly ensemble analyses for PM2.5, PM10, O3,
-  NO2 and SO2;
+- the previous two UTC days of hourly ensemble analyses for PM2.5, PM10, O3,
+  NO2 and SO2, providing complete trailing windows at local midnight;
 - the current 00 UTC ensemble forecast at lead hours 0–48 for those pollutants,
   PM10 dust, PM10 wildfire contribution and alder, birch, grass, mugwort,
   olive and ragweed pollen;
