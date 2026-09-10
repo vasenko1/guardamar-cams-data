@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 import zipfile
@@ -6,7 +7,13 @@ from pathlib import Path
 
 from netCDF4 import Dataset
 
-from producer import ProducerError, _normalise_longitude, _request, read_archive
+from producer import (
+    ProducerError,
+    _normalise_longitude,
+    _request,
+    published_forecast_is_current,
+    read_archive,
+)
 
 
 class ProducerTests(unittest.TestCase):
@@ -20,6 +27,38 @@ class ProducerTests(unittest.TestCase):
 
     def test_longitude_conversion(self):
         self.assertAlmostEqual(_normalise_longitude(359.35), -0.65)
+
+    def test_current_or_newer_published_base_skips_second_retrieval(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "latest.json"
+            document = {
+                "schema_version": 1,
+                "provider": "Copernicus Atmosphere Monitoring Service (CAMS)",
+                "product": "cams-europe-air-quality-forecasts",
+                "model": "ensemble",
+                "forecast_base_utc": "2026-09-10T00:00:00Z",
+                "hourly": [{"timestamp_utc": "2026-09-10T00:00:00Z"}],
+            }
+            output.write_text(json.dumps(document), encoding="utf-8")
+
+            self.assertTrue(
+                published_forecast_is_current(output, date(2026, 9, 10))
+            )
+            self.assertTrue(
+                published_forecast_is_current(output, date(2026, 9, 9))
+            )
+            self.assertFalse(
+                published_forecast_is_current(output, date(2026, 9, 11))
+            )
+
+    def test_corrupt_published_file_does_not_suppress_retrieval(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "latest.json"
+            output.write_text("not json", encoding="utf-8")
+
+            self.assertFalse(
+                published_forecast_is_current(output, date(2026, 9, 10))
+            )
 
     def test_reads_real_cams_shape_and_nearest_grid(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -298,11 +298,43 @@ def produce(output: Path, forecast_date: date, token: str) -> dict[str, Any]:
     return document
 
 
+def published_forecast_is_current(output: Path, forecast_date: date) -> bool:
+    """Avoid a second ADS retrieval after today's valid base was published."""
+
+    try:
+        document = json.loads(output.read_text(encoding="utf-8"))
+        if (
+            not isinstance(document, dict)
+            or document.get("schema_version") != 1
+            or document.get("provider")
+            != "Copernicus Atmosphere Monitoring Service (CAMS)"
+            or document.get("product") != DATASET
+            or document.get("model") != "ensemble"
+            or not isinstance(document.get("hourly"), list)
+            or not document["hourly"]
+        ):
+            return False
+        published = datetime.fromisoformat(
+            document["forecast_base_utc"].replace("Z", "+00:00")
+        )
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return False
+    if published.tzinfo is None:
+        return False
+    requested = datetime.combine(
+        forecast_date, datetime.min.time(), timezone.utc
+    )
+    return published.astimezone(timezone.utc) >= requested
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=Path("data/latest.json"))
     parser.add_argument("--date", type=date.fromisoformat, default=datetime.now(timezone.utc).date())
     args = parser.parse_args()
+    if published_forecast_is_current(args.output, args.date):
+        print(json.dumps({"status": "up_to_date"}, sort_keys=True))
+        return 0
     document = produce(args.output, args.date, os.environ.get("CAMS_ADS_TOKEN", "").strip())
     print(
         json.dumps(

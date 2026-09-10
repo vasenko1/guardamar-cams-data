@@ -2,9 +2,11 @@
 
 This public repository publishes one small, validated JSON subset of the
 official CAMS European Air Quality Forecasts for Guardamar del Segura. The
-scheduled GitHub Action runs once daily at 07:05 UTC, after the normal
-availability time of the current 00 UTC forecast and before the bot's 10:10
-`Europe/Madrid` refresh window.
+scheduled GitHub Action attempts at 07:05 UTC and once more at 08:01 UTC. The
+first normally publishes early; the second follows the guaranteed 08:00 UTC
+availability and still targets the bot's 10:10 `Europe/Madrid` refresh window.
+If the same or a newer forecast base is already published, the later run exits
+before ADS retrieval and creates no commit.
 
 The producer retrieves only:
 
