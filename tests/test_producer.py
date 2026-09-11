@@ -17,6 +17,14 @@ from producer import (
 
 
 class ProducerTests(unittest.TestCase):
+    def test_schedule_avoids_start_of_hour_load_window(self):
+        workflow = Path(".github/workflows/update.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('cron: "17 7 * * *"', workflow)
+        self.assertIn('cron: "17 8 * * *"', workflow)
+        self.assertEqual(workflow.count("cron:"), 2)
+
     def test_requests_are_bounded_and_date_specific(self):
         forecast = _request(date(2026, 9, 10), "forecast", ("ozone",))
         analysis = _request(date(2026, 9, 9), "analysis", ("ozone",))
